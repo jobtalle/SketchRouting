@@ -1,0 +1,9 @@
+body {
+    margin: 0;
+}
+
+#wrapper {
+    background-color: cornflowerblue;
+    width: 100vw;
+    height: 100vh;
+}
