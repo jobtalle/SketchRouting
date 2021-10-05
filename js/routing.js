@@ -1,15 +1,16 @@
-import {Grid} from "./grid.js";
+import {Structure} from "./structure.js";
+import {Random} from "./random.js";
 
 export class Routing {
     constructor(width, height) {
         this.width = width;
         this.height = height;
-        this.grid = new Grid(width, height);
+        this.structure = new Structure(width, height, new Random(Math.floor(Math.random() * Random.MODULUS)));
         this.background = document.createElement("canvas");
         this.background.width = width;
         this.background.height = height;
 
-        this.grid.draw(this.background.getContext("2d"))
+        this.structure.draw(this.background.getContext("2d"))
     }
 
     draw(context) {

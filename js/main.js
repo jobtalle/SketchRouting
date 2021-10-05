@@ -22,3 +22,7 @@ window.onresize = resize;
 
 resize();
 requestAnimationFrame(loop);
+
+window.addEventListener("keydown", () => {
+    resize();
+});
