@@ -1,17 +1,19 @@
 import {Neuron} from "./neuron.js";
+import {Pulse} from "./pulse.js";
 
 export class Structure {
     static EXPANSION_ATTEMPTS = 4;
     static SPACING = 1;
-    static CONNECTION_SPACING = 2;
-    static RADIUS_MIN = 2;
-    static RADIUS_MAX = 20;
+    static CONNECTION_SPACING = 5;
+    static RADIUS_MIN = 1.5;
+    static RADIUS_MAX = 15;
     static RADIUS_MUTATION = 3;
 
     constructor(width, height, random) {
         this.width = width;
         this.height = height;
         this.nodes = this.makeNodes(width, height, random);
+        this.pulses = [];
     }
 
     fits(nodes, x, y, radius) {
@@ -30,11 +32,41 @@ export class Structure {
         return true;
     }
 
+    touch(x, y) {
+        const neuron = this.getNearest(x, y);
+
+        if (neuron) for (let i = 0; i < 1; ++i)
+            this.pulses.push(new Pulse(neuron));
+    }
+
+    getNearest(x, y) {
+        let nearest = null;
+        let nearestDistance = Number.MAX_VALUE;
+
+        for (let node = 0, nodeCount = this.nodes.length; node < nodeCount; ++node) {
+            const dx = this.nodes[node].x - x;
+            const dy = this.nodes[node].y - y;
+            const d = dx * dx + dy * dy;
+
+            if (d < nearestDistance) {
+                nearestDistance = d;
+                nearest = this.nodes[node];
+            }
+        }
+
+        return nearest;
+    }
+
     makeNodes(width, height, random) {
-        const neurons = [new Neuron(
-            width * .5,
-            height * .5,
-            Structure.RADIUS_MIN + (Structure.RADIUS_MAX - Structure.RADIUS_MIN) * random.float)];
+        const neurons = [];
+
+        for (let i = 0; i < 3; ++i) {
+            neurons.push(new Neuron(
+                width * random.float,
+                height * random.float,
+                Structure.RADIUS_MIN + (Structure.RADIUS_MAX - Structure.RADIUS_MIN) * random.float));
+        }
+
         const stack = neurons.slice();
         let neuron = null;
 
@@ -65,8 +97,8 @@ export class Structure {
                 const distance = neurons[first].radius + neurons[second].radius + Structure.CONNECTION_SPACING;
 
                 if (dx * dx + dy * dy < distance * distance) {
-                    neurons[first].connect(neurons[second]);
-                    neurons[second].connect(neurons[first]);
+                    neurons[first].connect(neurons[second], random);
+                    neurons[second].connect(neurons[first], random);
                 }
             }
         }
@@ -74,11 +106,27 @@ export class Structure {
         return neurons;
     }
 
-    draw(context) {
-        context.fillStyle = "#b0d4e3";
-        context.strokeStyle = "white";
+    update(random) {
+        for (let pulse = this.pulses.length; pulse-- > 0;)
+            if (!this.pulses[pulse].update(random))
+                this.pulses.splice(pulse, 1);
+
+        for (let i = 0; i < 4; ++i)
+            this.touch(random.float * this.width, random.float * this.height);
+    }
+
+    drawNetwork(context) {
+        context.fillStyle = "#476fbf";
+        context.strokeStyle = "#93c1e2";
 
         for (const node of this.nodes)
             node.draw(context);
+    }
+
+    draw(context) {
+        context.fillStyle = "#fff";
+
+        for (let pulse = 0, pulseCount = this.pulses.length; pulse < pulseCount; ++pulse)
+            this.pulses[pulse].draw(context);
     }
 }

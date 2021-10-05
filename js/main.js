@@ -8,10 +8,11 @@ const resize = () => {
     canvas.width = wrapper.clientWidth;
     canvas.height = wrapper.clientHeight;
 
-    routing = new Routing(canvas.width, canvas.height);
+    routing = new Routing(canvas, canvas.width, canvas.height);
 };
 
 const loop = () => {
+    routing.update();
     routing.draw(context);
 
     requestAnimationFrame(loop);
@@ -23,6 +24,7 @@ window.onresize = resize;
 resize();
 requestAnimationFrame(loop);
 
-window.addEventListener("keydown", () => {
-    resize();
+window.addEventListener("keydown", event => {
+    if (event.key === " ")
+        resize();
 });
