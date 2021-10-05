@@ -3,6 +3,7 @@ import {Neuron} from "./neuron.js";
 export class Structure {
     static EXPANSION_ATTEMPTS = 4;
     static SPACING = 1;
+    static CONNECTION_SPACING = 2;
     static RADIUS_MIN = 2;
     static RADIUS_MAX = 20;
     static RADIUS_MUTATION = 3;
@@ -30,11 +31,11 @@ export class Structure {
     }
 
     makeNodes(width, height, random) {
-        const nodes = [new Neuron(
+        const neurons = [new Neuron(
             width * .5,
             height * .5,
             Structure.RADIUS_MIN + (Structure.RADIUS_MAX - Structure.RADIUS_MIN) * random.float)];
-        const stack = nodes.slice();
+        const stack = neurons.slice();
         let neuron = null;
 
         while (neuron = stack.shift()) {
@@ -49,19 +50,33 @@ export class Structure {
                 const x = neuron.x + Math.cos(angle) * distance;
                 const y = neuron.y + Math.sin(angle) * distance;
 
-                if (this.fits(nodes, x, y, radius)) {
+                if (this.fits(neurons, x, y, radius)) {
                     const child = new Neuron(x, y, radius);
-                    nodes.push(child);
+                    neurons.push(child);
                     stack.push(child);
                 }
             }
         }
 
-        return nodes;
+        for (let first = neurons.length; first-- > 0;) {
+            for (let second = first - 1; second-- > 0;) {
+                const dx = neurons[first].x - neurons[second].x;
+                const dy = neurons[first].y - neurons[second].y;
+                const distance = neurons[first].radius + neurons[second].radius + Structure.CONNECTION_SPACING;
+
+                if (dx * dx + dy * dy < distance * distance) {
+                    neurons[first].connect(neurons[second]);
+                    neurons[second].connect(neurons[first]);
+                }
+            }
+        }
+
+        return neurons;
     }
 
     draw(context) {
         context.fillStyle = "#b0d4e3";
+        context.strokeStyle = "white";
 
         for (const node of this.nodes)
             node.draw(context);
