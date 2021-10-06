@@ -4,10 +4,9 @@ import {Pulse} from "./pulse.js";
 export class Structure {
     static EXPANSION_ATTEMPTS = 4;
     static SPACING = 1;
-    static CONNECTION_SPACING = 5;
-    static RADIUS_MIN = 1.5;
+    static RADIUS_MIN = 1;
     static RADIUS_MAX = 15;
-    static RADIUS_MUTATION = 3;
+    static RADIUS_MUTATION = .3;
 
     constructor(width, height, random) {
         this.width = width;
@@ -35,7 +34,7 @@ export class Structure {
     touch(x, y) {
         const neuron = this.getNearest(x, y);
 
-        if (neuron) for (let i = 0; i < 1; ++i)
+        if (neuron) for (let i = 0; i < 50; ++i)
             this.pulses.push(new Pulse(neuron));
     }
 
@@ -60,12 +59,10 @@ export class Structure {
     makeNodes(width, height, random) {
         const neurons = [];
 
-        for (let i = 0; i < 3; ++i) {
-            neurons.push(new Neuron(
-                width * random.float,
-                height * random.float,
-                Structure.RADIUS_MIN + (Structure.RADIUS_MAX - Structure.RADIUS_MIN) * random.float));
-        }
+        neurons.push(new Neuron(
+            width * .5,
+            height * .5,
+            Structure.RADIUS_MIN));
 
         const stack = neurons.slice();
         let neuron = null;
@@ -76,29 +73,19 @@ export class Structure {
                     Structure.RADIUS_MIN,
                     Math.min(
                         Structure.RADIUS_MAX,
-                        neuron.radius + (2 * random.float - 1) * Structure.RADIUS_MUTATION));
+                        neuron.radius * (1 + (2 * random.float - 1) * Structure.RADIUS_MUTATION)));
                 const distance = radius + neuron.radius + Structure.SPACING;
                 const angle = random.float * Math.PI * 2;
                 const x = neuron.x + Math.cos(angle) * distance;
                 const y = neuron.y + Math.sin(angle) * distance;
 
                 if (this.fits(neurons, x, y, radius)) {
-                    const child = new Neuron(x, y, radius);
+                    const child = new Neuron(x, y, radius, neuron.length + 1, neuron);
+
                     neurons.push(child);
                     stack.push(child);
-                }
-            }
-        }
 
-        for (let first = neurons.length; first-- > 0;) {
-            for (let second = first - 1; second-- > 0;) {
-                const dx = neurons[first].x - neurons[second].x;
-                const dy = neurons[first].y - neurons[second].y;
-                const distance = neurons[first].radius + neurons[second].radius + Structure.CONNECTION_SPACING;
-
-                if (dx * dx + dy * dy < distance * distance) {
-                    neurons[first].connect(neurons[second], random);
-                    neurons[second].connect(neurons[first], random);
+                    neuron.addChild(child);
                 }
             }
         }
@@ -110,17 +97,57 @@ export class Structure {
         for (let pulse = this.pulses.length; pulse-- > 0;)
             if (!this.pulses[pulse].update(random))
                 this.pulses.splice(pulse, 1);
+    }
 
-        for (let i = 0; i < 4; ++i)
-            this.touch(random.float * this.width, random.float * this.height);
+    findEnds() {
+        const ends = [];
+
+        for (let node = this.nodes.length; node-- > 0;)
+            if (this.nodes[node].children.length === 0)
+                ends.push(this.nodes[node]);
+
+        return ends;
     }
 
     drawNetwork(context) {
         context.fillStyle = "#476fbf";
         context.strokeStyle = "#93c1e2";
 
-        for (const node of this.nodes)
-            node.draw(context);
+        const connected = [];
+
+        for (let end of this.findEnds()) {
+            context.beginPath();
+            context.moveTo(
+                (end.x + end.parent.x) * .5,
+                (end.y + end.parent.y) * .5);
+
+            while (end.parent) {
+                if (end.parent.parent)
+                    context.quadraticCurveTo(
+                        end.parent.x,
+                        end.parent.y,
+                        (end.parent.x + end.parent.parent.x) * .5,
+                        (end.parent.y + end.parent.parent.y) * .5);
+                else
+                    context.quadraticCurveTo(
+                        (end.x + end.parent.x) * .5,
+                        (end.y + end.parent.y) * .5,
+                        end.parent.x,
+                        end.parent.y);
+
+                end = end.parent;
+
+                // if (connected.indexOf(end) === -1)
+                //     connected.push(end);
+                // else
+                //     break;
+            }
+
+            context.stroke();
+        }
+
+        // for (const node of this.nodes)
+        //     node.draw(context);
     }
 
     draw(context) {

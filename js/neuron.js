@@ -1,64 +1,23 @@
 export class Neuron {
-    static DEFAULT_WEIGHT = 1;
-    static DEFAULT_DECAY = .01;
-
-    constructor(x, y, radius) {
+    constructor(x, y, radius, length = 0, parent = null) {
         this.x = x;
         this.y = y;
         this.radius = radius;
-        this.connections = [];
-        this.weights = [];
-        this.totalWeight = 0;
-    }
-
-    calculateTotalWeight() {
-        this.totalWeight = 0;
-
-        for (let connection = 0, connections = this.connections.length; connection < connections; ++connection)
-            this.totalWeight += this.weights[connection];
-    }
-
-    decay() {
-        for (let weight = 0, weightCount = this.weights.length; weight < weightCount; ++weight) {
-            const d = this.weights[weight] - Neuron.DEFAULT_WEIGHT;
-
-            this.weights[weight] += d * Neuron.DEFAULT_DECAY;
-        }
+        this.parent = parent;
+        this.children = [];
+        this.length = length;
     }
 
     next(random) {
-        const connectionCount = this.connections.length;
-        let index = 0;
-
-        if (connectionCount > 1) {
-            const at = random.float * this.totalWeight;
-            let w = this.weights[0];
-
-            index = connectionCount - 1;
-
-            for (let connection = 1, connections = this.connections.length; connection < connections; ++connection) {
-                if (at < w) {
-                    index = connection - 1;
-
-                    break;
-                }
-
-                w += this.weights[connection];
-            }
-        }
-
-        this.decay();
-        this.calculateTotalWeight();
-
-        return index;
+        return this.children[Math.floor(random.float * this.children.length)];
     }
 
     draw(context) {
-        context.beginPath();
-        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        context.fill();
+        // context.beginPath();
+        // context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        // context.fill();
 
-        for (const connection of this.connections) {
+        for (const connection of this.children) {
             context.beginPath();
             context.moveTo(this.x, this.y);
             context.lineTo(connection.x, connection.y);
@@ -66,12 +25,7 @@ export class Neuron {
         }
     }
 
-    connect(neuron, random) {
-        if (this.connections.indexOf(neuron) === -1) {
-            this.connections.push(neuron);
-            this.weights.push(1 + random.float * 4);
-
-            this.calculateTotalWeight();
-        }
+    addChild(neuron) {
+        this.children.push(neuron);
     }
 }
