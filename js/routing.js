@@ -2,13 +2,10 @@ import {Structure} from "./structure.js";
 import {Random} from "./random.js";
 
 export class Routing {
-    static PULSE_ZOOM = .01;
-    static PULSE_POWER = 8;
-
     constructor(element, width, height) {
         const seed = Math.floor(Math.random() * Random.MODULUS);
         // const seed = 394342599;
-        console.warn(seed);
+        // console.warn(seed);
 
         this.width = width;
         this.height = height;
@@ -60,3 +57,6 @@ export class Routing {
         context.restore();
     }
 }
+
+Routing.PULSE_ZOOM = .01;
+Routing.PULSE_POWER = 8;

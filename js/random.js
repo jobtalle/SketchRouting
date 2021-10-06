@@ -1,8 +1,4 @@
 export class Random {
-    static MULTIPLIER = 69069;
-    static MODULUS = Math.pow(2, 32);
-    static INCREMENT = 1;
-
     constructor(seed = Math.floor(Math.random() * Random.MODULUS)) {
         this.n = seed;
     }
@@ -13,3 +9,7 @@ export class Random {
         return this.n / Random.MODULUS;
     }
 }
+
+Random.MULTIPLIER = 69069;
+Random.MODULUS = Math.pow(2, 32);
+Random.INCREMENT = 1;

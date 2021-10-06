@@ -1,8 +1,4 @@
 export class Pulse {
-    static RADIUS_MIN = 16;
-    static RADIUS_MAX = 80;
-    static RADIUS_POWER = 5;
-
     constructor(neuron, random, reversed = false) {
         this.neuron = neuron;
         this.reversed = reversed;
@@ -80,3 +76,7 @@ export class Pulse {
         context.fill();
     }
 }
+
+Pulse.RADIUS_MIN = 16;
+Pulse.RADIUS_MAX = 80;
+Pulse.RADIUS_POWER = 5;

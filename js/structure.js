@@ -2,24 +2,6 @@ import {Neuron} from "./neuron.js";
 import {Pulse} from "./pulse.js";
 
 export class Structure {
-    static EXPANSION_ATTEMPTS = 4;
-    static SPACING = 1;
-    static RADIUS_MIN = 2;
-    static RADIUS_MAX = 32;
-    static RADIUS_MUTATION = .3;
-    static CENTER_RADIUS = 64;
-    static TARGETS = 14;
-    static PULSE_LENGTH_BIAS = .2;
-    static CHARGE_DECAY = .978;
-    static PULSE_THRESHOLD = 7.5;
-    static DISCHARGE = 70;
-    static DISCHARGE_CHANCE = .1;
-    static PULSE_TIME_MIN = 5;
-    static PULSE_TIME_MAX = 64;
-    static PULSE_GLOW = .0005;
-    static PULSE_GLOW_POWER = 4;
-    static CHARGE_ZOOM = .12;
-
     constructor(width, height, x, y, random) {
         this.width = width;
         this.height = height;
@@ -302,3 +284,21 @@ export class Structure {
         }
     }
 }
+
+Structure.EXPANSION_ATTEMPTS = 4;
+Structure.SPACING = 1;
+Structure.RADIUS_MIN = 2;
+Structure.RADIUS_MAX = 32;
+Structure.RADIUS_MUTATION = .3;
+Structure.CENTER_RADIUS = 64;
+Structure.TARGETS = 14;
+Structure.PULSE_LENGTH_BIAS = .2;
+Structure.CHARGE_DECAY = .978;
+Structure.PULSE_THRESHOLD = 7.5;
+Structure.DISCHARGE = 70;
+Structure.DISCHARGE_CHANCE = .1;
+Structure.PULSE_TIME_MIN = 5;
+Structure.PULSE_TIME_MAX = 64;
+Structure.PULSE_GLOW = .0005;
+Structure.PULSE_GLOW_POWER = 4;
+Structure.CHARGE_ZOOM = .12;
