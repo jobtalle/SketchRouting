@@ -6,6 +6,7 @@ export class Neuron {
         this.parent = parent;
         this.children = [];
         this.length = length;
+        this.drawn = false;
     }
 
     addChild(neuron) {

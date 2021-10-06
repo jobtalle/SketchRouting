@@ -122,7 +122,7 @@ export class Structure {
             }
 
             if (children === 0)
-                this.ends.push(neuron);
+                this.ends.unshift(neuron);
         }
 
         return neurons;
@@ -181,6 +181,9 @@ export class Structure {
             let width = 1;
 
             while (end.parent) {
+                if (end.drawn)
+                    break;
+
                 context.lineWidth = ++width * widthScale;
                 context.beginPath();
                 context.moveTo(
@@ -202,6 +205,7 @@ export class Structure {
 
                 context.stroke();
 
+                end.drawn = true;
                 end = end.parent;
             }
         }
@@ -292,7 +296,7 @@ Structure.RADIUS_MAX = 32;
 Structure.RADIUS_MUTATION = .3;
 Structure.CENTER_RADIUS = 64;
 Structure.TARGETS = 14;
-Structure.PULSE_LENGTH_BIAS = .2;
+Structure.PULSE_LENGTH_BIAS = 3;
 Structure.CHARGE_DECAY = .978;
 Structure.PULSE_THRESHOLD = 7.5;
 Structure.DISCHARGE = 70;
