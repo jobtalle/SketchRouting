@@ -17,21 +17,8 @@ export class Routing {
 
         this.structure.drawNetwork(this.background.getContext("2d"));
 
-        let down = false;
-
         element.addEventListener("mousedown", event => {
             this.structure.touch(event.clientX, event.clientY);
-
-            down = true;
-        });
-
-        element.addEventListener("mousemove", event => {
-            if (down)
-                this.structure.touch(event.clientX, event.clientY);
-        });
-
-        element.addEventListener("mouseup", () => {
-            down = false;
         });
     }
 
@@ -40,9 +27,31 @@ export class Routing {
     }
 
     draw(context) {
+        context.globalCompositeOperation = "source-over";
+
+        const lineGradient = context.createRadialGradient(
+            this.width * .5,
+            this.height * .5,
+            0,
+            this.width * .5,
+            this.height * .5,
+            .5 * Math.sqrt(this.width * this.width + this.height * this.height));
+
+        lineGradient.addColorStop(0, "#0b214e");
+        lineGradient.addColorStop(1, "rgba(11,33,78,0.42)");
+
+        context.fillStyle = lineGradient;
         context.clearRect(0, 0, this.width, this.height);
+        context.beginPath();
+        context.rect(0, 0, this.width, this.height);
+        context.fill();
+
+        this.structure.drawPulses(context);
+
+        context.globalCompositeOperation = "destination-in";
         context.drawImage(this.background, 0, 0);
 
-        this.structure.draw(context);
+        context.globalCompositeOperation = "lighter";
+        this.structure.drawPulsesLight(context);
     }
 }

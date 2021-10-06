@@ -3,7 +3,7 @@ body {
 }
 
 #wrapper {
-    background-color: #2853a7;
+    background: radial-gradient(circle at center, #2853a7, #0b214e);
     width: 100vw;
     height: 100vh;
 }
