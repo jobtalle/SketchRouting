@@ -42,18 +42,7 @@ export class Routing {
             context.translate(-this.width * .5, -this.height * .5);
         }
 
-        const lineGradient = context.createRadialGradient(
-            this.width * .5,
-            this.height * .5,
-            0,
-            this.width * .5,
-            this.height * .5,
-            .5 * Math.sqrt(this.width * this.width + this.height * this.height));
-
-        lineGradient.addColorStop(0, "#172c4e");
-        lineGradient.addColorStop(1, "#172c4e");
-
-        context.fillStyle = lineGradient;
+        context.fillStyle = "#132745";
         context.clearRect(0, 0, this.width, this.height);
         context.beginPath();
         context.rect(0, 0, this.width, this.height);

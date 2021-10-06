@@ -10,12 +10,15 @@ export class Structure {
     static CENTER_RADIUS = 64;
     static TARGETS = 14;
     static PULSE_LENGTH_BIAS = .2;
-    static CHARGE_DECAY = .99;
-    static PULSE_THRESHOLD = 5;
-    static DISCHARGE = 60;
-    static DISCHARGE_CHANCE = .2;
+    static CHARGE_DECAY = .978;
+    static PULSE_THRESHOLD = 7.5;
+    static DISCHARGE = 70;
+    static DISCHARGE_CHANCE = .1;
     static PULSE_TIME_MIN = 5;
     static PULSE_TIME_MAX = 64;
+    static PULSE_GLOW = .0005;
+    static PULSE_GLOW_POWER = 4;
+    static CHARGE_ZOOM = .12;
 
     constructor(width, height, x, y, random) {
         this.width = width;
@@ -38,7 +41,9 @@ export class Structure {
     }
 
     get zoom() {
-        return this.discharge / Structure.DISCHARGE;
+        return Math.max(
+            this.discharge / Structure.DISCHARGE,
+            this.charge * Structure.CHARGE_ZOOM);
     }
 
     fits(nodes, x, y, radius) {
@@ -186,6 +191,7 @@ export class Structure {
 
     drawNetwork(context) {
         context.strokeStyle = "#fff";
+        context.lineCap = "round";
 
         const widthScale = .1;
 
@@ -224,9 +230,6 @@ export class Structure {
     }
 
     drawPulses(context) {
-        for (let pulse = 0, pulseCount = this.pulses.length; pulse < pulseCount; ++pulse)
-            this.pulses[pulse].draw(context);
-
         if (this.discharge) {
             context.fillStyle = "#eed680";
 
@@ -234,6 +237,39 @@ export class Structure {
             context.arc(this.x, this.y, Structure.CENTER_RADIUS, 0, Math.PI * 2);
             context.fill();
         }
+        else {
+            const radius = Structure.CENTER_RADIUS * (1 + Math.pow(this.charge, Structure.PULSE_GLOW_POWER) * Structure.PULSE_GLOW);
+            const gradient = context.createRadialGradient(
+                this.x,
+                this.y,
+                0,
+                this.x,
+                this.y,
+                radius);
+
+            gradient.addColorStop(0, "rgb(255,255,255)");
+            gradient.addColorStop(1, "rgba(255,255,255,0)");
+
+            context.fillStyle = gradient;
+            context.beginPath();
+            context.arc(
+                this.x,
+                this.y,
+                Structure.CENTER_RADIUS,
+                0,
+                Math.PI * 2);
+            context.arc(
+                this.x,
+                this.y,
+                radius,
+                0,
+                Math.PI * 2,
+                true);
+            context.fill();
+        }
+
+        for (let pulse = 0, pulseCount = this.pulses.length; pulse < pulseCount; ++pulse)
+            this.pulses[pulse].draw(context);
     }
 
     drawPulsesLight(context) {
