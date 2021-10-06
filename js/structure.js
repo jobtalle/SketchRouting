@@ -4,29 +4,49 @@ import {Pulse} from "./pulse.js";
 export class Structure {
     static EXPANSION_ATTEMPTS = 4;
     static SPACING = 1;
-    static RADIUS_MIN = 3;
+    static RADIUS_MIN = 2;
     static RADIUS_MAX = 32;
     static RADIUS_MUTATION = .3;
     static CENTER_RADIUS = 64;
-    static TARGETS = 20;
+    static TARGETS = 14;
     static PULSE_LENGTH_BIAS = .2;
+    static CHARGE_DECAY = .99;
+    static PULSE_THRESHOLD = 5;
+    static DISCHARGE = 60;
+    static DISCHARGE_CHANCE = .2;
+    static PULSE_TIME_MIN = 5;
+    static PULSE_TIME_MAX = 64;
 
-    constructor(width, height, random) {
+    constructor(width, height, x, y, random) {
         this.width = width;
         this.height = height;
+        this.x = x;
+        this.y = y;
+        this.starts = [];
         this.ends = [];
         this.nodes = this.makeNodes(width, height, random);
         this.pulses = [];
         this.pulseTime = 1;
         this.pulseTimePrevious = 1;
+        this.charge = 0;
+        this.discharge = 0;
+
+        window.addEventListener("keydown", event => {
+            if (event.key === "x")
+                this.centerPulse();
+        });
+    }
+
+    get zoom() {
+        return this.discharge / Structure.DISCHARGE;
     }
 
     fits(nodes, x, y, radius) {
         if (x < 0 || y < 0 || x > this.width || y > this.height)
             return false;
 
-        const cdx = x - this.width * .5;
-        const cdy = y - this.height * .5;
+        const cdx = x - this.x;
+        const cdy = y - this.y;
 
         if (cdx * cdx + cdy * cdy < Structure.CENTER_RADIUS * Structure.CENTER_RADIUS)
             return false;
@@ -43,11 +63,15 @@ export class Structure {
         return true;
     }
 
-    touch(x, y) {
+    centerPulse() {
+        this.discharge = Structure.DISCHARGE;
+    }
+
+    touch(x, y, random) {
         const neuron = this.getNearest(x, y);
 
         if (neuron)
-            this.pulses.push(new Pulse(neuron));
+            this.pulses.push(new Pulse(neuron, random));
     }
 
     getNearest(x, y) {
@@ -69,19 +93,19 @@ export class Structure {
     }
 
     makeNodes(width, height, random) {
-        const neurons = [];
         const angleOffset = random.float;
 
         for (let i = 0; i < Structure.TARGETS; ++i) {
             const angle = Math.PI * 2 * (i + angleOffset) / Structure.TARGETS;
 
-            neurons.push(new Neuron(
-                width * .5 + Math.cos(angle) * Structure.CENTER_RADIUS,
-                height * .5 + Math.sin(angle) * Structure.CENTER_RADIUS,
+            this.starts.push(new Neuron(
+                this.x + Math.cos(angle) * Structure.CENTER_RADIUS,
+                this.y + Math.sin(angle) * Structure.CENTER_RADIUS,
                 Structure.RADIUS_MIN));
         }
 
-        const stack = neurons.slice();
+        const neurons = this.starts.slice();
+        const stack = this.starts.slice();
         let neuron = null;
 
         while (neuron = stack.shift()) {
@@ -118,22 +142,46 @@ export class Structure {
     }
 
     update(random) {
+        if (this.discharge !== 0) {
+            this.charge = 0;
+
+            for (const start of this.starts) if (random.float < Structure.DISCHARGE_CHANCE) {
+                this.pulses.push(new Pulse(start, random, true));
+
+                --this.discharge;
+            }
+
+            if (this.discharge < 0)
+                this.discharge = 0;
+        }
+
+        this.charge *= Structure.CHARGE_DECAY;
+
         if (--this.pulseTime < 0) {
             this.pulses.push(new Pulse(this.ends[
-                Math.floor(Math.pow(random.float, Structure.PULSE_LENGTH_BIAS) * this.ends.length)]));
+                Math.floor(Math.pow(random.float, Structure.PULSE_LENGTH_BIAS) * this.ends.length)], random));
 
             const r = .4;
-            const time = Math.max(16, Math.min(64, this.pulseTimePrevious * (1 + (random.float * 2 - 1) * r)));
+            const time = Math.max(
+                Structure.PULSE_TIME_MIN,
+                Math.min(
+                    Structure.PULSE_TIME_MAX,
+                    this.pulseTimePrevious * (1 + (random.float * 2 - 1) * r)));
 
             this.pulseTimePrevious = time;
-            console.log(time);
 
             this.pulseTime = time;
         }
 
-        for (let pulse = this.pulses.length; pulse-- > 0;)
-            if (!this.pulses[pulse].update(random))
-                this.pulses.splice(pulse, 1);
+        for (let pulse = this.pulses.length; pulse-- > 0;) if (!this.pulses[pulse].update(random)) {
+            if (!this.pulses[pulse].reversed)
+                ++this.charge
+
+            this.pulses.splice(pulse, 1);
+        }
+
+        if (this.charge > Structure.PULSE_THRESHOLD)
+            this.centerPulse();
     }
 
     drawNetwork(context) {
@@ -171,17 +219,50 @@ export class Structure {
         }
 
         context.beginPath();
-        context.arc(this.width * .5, this.height * .5, Structure.CENTER_RADIUS, 0, Math.PI * 2);
+        context.arc(this.x, this.y, Structure.CENTER_RADIUS, 0, Math.PI * 2);
         context.fill();
     }
 
     drawPulses(context) {
         for (let pulse = 0, pulseCount = this.pulses.length; pulse < pulseCount; ++pulse)
             this.pulses[pulse].draw(context);
+
+        if (this.discharge) {
+            context.fillStyle = "#eed680";
+
+            context.beginPath();
+            context.arc(this.x, this.y, Structure.CENTER_RADIUS, 0, Math.PI * 2);
+            context.fill();
+        }
     }
 
     drawPulsesLight(context) {
         for (let pulse = 0, pulseCount = this.pulses.length; pulse < pulseCount; ++pulse)
             this.pulses[pulse].drawLight(context);
+
+        if (this.discharge) {
+            const radius = Structure.CENTER_RADIUS * 5 * this.discharge / Structure.DISCHARGE;
+            const gradient = context.createRadialGradient(
+                this.x,
+                this.y,
+                0,
+                this.x,
+                this.y,
+                radius);
+
+            gradient.addColorStop(0, "rgba(248,247,227,0.58)");
+            gradient.addColorStop(1, "rgba(255,255,255,0)");
+
+            context.fillStyle = gradient;
+
+            context.beginPath();
+            context.arc(
+                this.x,
+                this.y,
+                radius,
+                0,
+                Math.PI * 2);
+            context.fill();
+        }
     }
 }

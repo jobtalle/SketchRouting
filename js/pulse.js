@@ -1,16 +1,31 @@
 export class Pulse {
-    constructor(neuron) {
+    static RADIUS_MIN = 16;
+    static RADIUS_MAX = 80;
+    static RADIUS_POWER = 5;
+
+    constructor(neuron, random, reversed = false) {
         this.neuron = neuron;
+        this.reversed = reversed;
+        this.radius = Pulse.RADIUS_MIN + (Pulse.RADIUS_MAX - Pulse.RADIUS_MIN) * Math.pow(random.float, Pulse.RADIUS_POWER);
     }
 
     update(random) {
-        if (this.neuron.parent === null)
-            return false;
+        if (this.reversed) {
+            if (this.neuron.children.length === 0)
+                return false;
 
-        this.neuron = this.neuron.parent;
-        this.radius = 24;
+            this.neuron = this.neuron.children[Math.floor(random.float * this.neuron.children.length)];
 
-        return true;
+            return true;
+        }
+        else {
+            if (this.neuron.parent === null)
+                return false;
+
+            this.neuron = this.neuron.parent;
+
+            return true;
+        }
     }
 
     draw(context) {
@@ -38,6 +53,9 @@ export class Pulse {
     }
 
     drawLight(context) {
+        if (this.reversed)
+            return;
+
         const radius = this.radius * 2 / (1 + this.neuron.length * .1);
         const gradient = context.createRadialGradient(
             this.neuron.x,
